@@ -1,4 +1,5 @@
 const express = require("express");
+const { v4: uuidv4 } = require("uuid");
 const { google } = require("googleapis");
 
 const app = express();
@@ -27,7 +28,7 @@ async function getAuthSheets() {
   };
 }
 
-app.get("/metadata", async (req, res) => {
+app.get("/auth", async (req, res) => {
   const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
 
   const { data } = await googleSheets.spreadsheets.get({
@@ -38,10 +39,10 @@ app.get("/metadata", async (req, res) => {
   res.send(data);
 });
 
-app.get("/getRows", async (req, res) => {
+app.get("/users", async (req, res) => {
   const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
 
-  const getRows = await googleSheets.spreadsheets.values.get({
+  const { data } = await googleSheets.spreadsheets.values.get({
     auth,
     spreadsheetId,
     range: "Página1",
@@ -49,13 +50,43 @@ app.get("/getRows", async (req, res) => {
     dateTimeRenderOption: "FORMATTED_STRING",
   });
 
-  res.send(getRows.data);
+  const rows = data.values;
+
+  if (rows.length > 1) {
+    const formattedData = [];
+
+    for (let index = 0; index < rows.length; index++) {
+      if (index !== 0) {
+        const element = rows[index];
+
+        formattedData.push({
+          Id: element[0],
+          Name: element[1],
+          Phone: element[2],
+          Email: element[3],
+        });
+      }
+    }
+
+    res.send({
+      Response: formattedData,
+    });
+    return;
+  }
+
+  res.send({
+    Response: rows,
+  });
 });
 
-app.post("/addRow", async (req, res) => {
+app.post("/users", async (req, res) => {
   const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
 
   const { values } = req.body;
+
+  const newUserData = [
+    [uuidv4(), "Aline Ribeiro", "51940028922", "alineribeiro98@gmail"],
+  ];
 
   const row = await googleSheets.spreadsheets.values.append({
     auth,
@@ -63,14 +94,14 @@ app.post("/addRow", async (req, res) => {
     range: "Página1",
     valueInputOption: "USER_ENTERED",
     resource: {
-      values: values,
+      values: newUserData,
     },
   });
 
   res.send(row.data);
 });
 
-app.post("/updateValue", async (req, res) => {
+app.post("/updateUser", async (req, res) => {
   const { googleSheets, spreadsheetId } = await getAuthSheets();
 
   const { values } = req.body;
