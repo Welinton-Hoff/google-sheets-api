@@ -1,24 +1,14 @@
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
-const { google } = require("googleapis");
+
+const { getTableRow } = require("./src/utils/usersUtils");
+const { getAuthSheets } = require("./src/services/authServices");
 
 const app = express();
 app.use(express.json());
 
-async function getAuthSheets() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: "credentials.json",
-    scopes: "https://www.googleapis.com/auth/spreadsheets",
-  });
-
-  const client = await auth.getClient();
-
-  const googleSheets = google.sheets({
-    version: "v4",
-    auth: client,
-  });
-
-  const spreadsheetId = "1nzy0equCQGFiboQc1a13M5lnXH9vN0yC6_0r-VOu6kE";
+async function getAuth() {
+  const { auth, client, googleSheets, spreadsheetId } = await getAuthSheets();
 
   return {
     auth,
@@ -29,7 +19,7 @@ async function getAuthSheets() {
 }
 
 app.get("/auth", async (req, res) => {
-  const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
+  const { googleSheets, auth, spreadsheetId } = await getAuth();
 
   const { data } = await googleSheets.spreadsheets.get({
     auth,
@@ -40,7 +30,7 @@ app.get("/auth", async (req, res) => {
 });
 
 app.get("/users", async (req, res) => {
-  const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
+  const { googleSheets, auth, spreadsheetId } = await getAuth();
 
   const { data } = await googleSheets.spreadsheets.values.get({
     auth,
@@ -80,17 +70,15 @@ app.get("/users", async (req, res) => {
 });
 
 app.post("/users", async (req, res) => {
-  const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
+  const { googleSheets, auth, spreadsheetId } = await getAuth();
 
   const { values } = req.body;
 
   const newUserData = [
-    [
-      uuidv4(),
-      "Matheus da Silva",
-      "37940028922",
-      "matheuszinhoreidelas@gmail.com",
-    ],
+    [uuidv4(), "Otávio da Silva", "37953253563", "otaviosilva@gmail.com"],
+    [uuidv4(), "Luana Ribeiro", "37910295648", "luana_ribeiro@gmail.com"],
+    [uuidv4(), "Uéslei juchen", "51999804947", "ueslei_juchen@gmail.com"],
+    [uuidv4(), "Ana Paula", "51980993453", "anapaula99@gmail.com"],
   ];
 
   const row = await googleSheets.spreadsheets.values.append({
@@ -107,7 +95,19 @@ app.post("/users", async (req, res) => {
 });
 
 app.post("/deleteUser", async (req, res) => {
-  const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
+  const { googleSheets, auth, spreadsheetId } = await getAuth();
+
+  const userRegisters = await googleSheets.spreadsheets.values.get({
+    auth,
+    spreadsheetId,
+    range: "Página1",
+    valueRenderOption: "UNFORMATTED_VALUE",
+    dateTimeRenderOption: "FORMATTED_STRING",
+  });
+
+  const rows = userRegisters.data.values;
+  const bodyID = "fc0f6aeb-3b4a-4bca-abbe-6eb54438e628";
+  let rowIndex = getTableRow(rows, bodyID);
 
   // For delete a Row it's necessary inform the row index of row will be excluded in the startIndex field.
   // The endIndex field will be the next row index after the startIndex.
@@ -118,8 +118,8 @@ app.post("/deleteUser", async (req, res) => {
         range: {
           sheetId: 0,
           dimension: "ROWS",
-          startIndex: 3,
-          endIndex: 4,
+          startIndex: rowIndex,
+          endIndex: rowIndex + 1,
         },
       },
     },
@@ -137,16 +137,37 @@ app.post("/deleteUser", async (req, res) => {
 });
 
 app.post("/updateUser", async (req, res) => {
-  const { googleSheets, spreadsheetId } = await getAuthSheets();
+  const { auth, googleSheets, spreadsheetId } = await getAuth();
 
-  const { values } = req.body;
+  const { data } = await googleSheets.spreadsheets.values.get({
+    auth,
+    spreadsheetId,
+    range: "Página1",
+    valueRenderOption: "UNFORMATTED_VALUE",
+    dateTimeRenderOption: "FORMATTED_STRING",
+  });
+
+  const rows = data.values;
+  const bodyID = "ddf7327f-1fb6-4d51-8e6d-573c7abdf668";
+  let rowIndex = getTableRow(rows, bodyID);
+
+  const { values } = req.body; // Body update data
+  const userData = [
+    [
+      bodyID,
+      "Welinton Hoff da Rosa",
+      "51996540312",
+      "welinton.h.r@hotmail.com",
+    ],
+  ];
 
   const updateValue = await googleSheets.spreadsheets.values.update({
+    auth,
     spreadsheetId,
-    range: "Página1!A2:C2",
     valueInputOption: "USER_ENTERED",
+    range: `Página1!A${rowIndex + 1}:D${rowIndex + 1}`,
     resource: {
-      values: values,
+      values: userData,
     },
   });
 
