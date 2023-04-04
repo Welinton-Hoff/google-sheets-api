@@ -85,7 +85,12 @@ app.post("/users", async (req, res) => {
   const { values } = req.body;
 
   const newUserData = [
-    [uuidv4(), "Aline Ribeiro", "51940028922", "alineribeiro98@gmail"],
+    [
+      uuidv4(),
+      "Matheus da Silva",
+      "37940028922",
+      "matheuszinhoreidelas@gmail.com",
+    ],
   ];
 
   const row = await googleSheets.spreadsheets.values.append({
@@ -99,6 +104,36 @@ app.post("/users", async (req, res) => {
   });
 
   res.send(row.data);
+});
+
+app.post("/deleteUser", async (req, res) => {
+  const { googleSheets, auth, spreadsheetId } = await getAuthSheets();
+
+  // For delete a Row it's necessary inform the row index of row will be excluded in the startIndex field.
+  // The endIndex field will be the next row index after the startIndex.
+
+  const batchUpdateRequest = [
+    {
+      deleteDimension: {
+        range: {
+          sheetId: 0,
+          dimension: "ROWS",
+          startIndex: 3,
+          endIndex: 4,
+        },
+      },
+    },
+  ];
+
+  const { data } = await googleSheets.spreadsheets.batchUpdate({
+    auth,
+    spreadsheetId: spreadsheetId,
+    resource: {
+      requests: batchUpdateRequest,
+    },
+  });
+
+  res.send(data);
 });
 
 app.post("/updateUser", async (req, res) => {
