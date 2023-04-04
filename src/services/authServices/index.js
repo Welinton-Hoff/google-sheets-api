@@ -1,5 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const { google } = require("googleapis");
+
+const baseUrl = process.env["BASE_URL"];
+const spreadsheetId = process.env["SPREAD_SHEET_ID"];
 
 const app = express();
 app.use(express.json());
@@ -7,7 +12,7 @@ app.use(express.json());
 async function getAuthSheets() {
   const auth = new google.auth.GoogleAuth({
     keyFile: "credentials.json",
-    scopes: "https://www.googleapis.com/auth/spreadsheets",
+    scopes: baseUrl,
   });
 
   const client = await auth.getClient();
@@ -16,8 +21,6 @@ async function getAuthSheets() {
     version: "v4",
     auth: client,
   });
-
-  const spreadsheetId = "1nzy0equCQGFiboQc1a13M5lnXH9vN0yC6_0r-VOu6kE";
 
   return {
     auth,

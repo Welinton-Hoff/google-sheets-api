@@ -106,7 +106,7 @@ app.post("/deleteUser", async (req, res) => {
   });
 
   const rows = userRegisters.data.values;
-  const bodyID = "fc0f6aeb-3b4a-4bca-abbe-6eb54438e628";
+  const bodyID = "0c37f043-44c5-4d8b-b93e-101f824012db";
   let rowIndex = getTableRow(rows, bodyID);
 
   // For delete a Row it's necessary inform the row index of row will be excluded in the startIndex field.
