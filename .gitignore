@@ -1,4 +1,4 @@
-/.env
+# /.env
 /node_modules
-/credentials.json
+# /credentials.json
 /package-lock.json

@@ -74,12 +74,7 @@ app.post("/users", async (req, res) => {
 
   const { values } = req.body;
 
-  const newUserData = [
-    [uuidv4(), "Otávio da Silva", "37953253563", "otaviosilva@gmail.com"],
-    [uuidv4(), "Luana Ribeiro", "37910295648", "luana_ribeiro@gmail.com"],
-    [uuidv4(), "Uéslei juchen", "51999804947", "ueslei_juchen@gmail.com"],
-    [uuidv4(), "Ana Paula", "51980993453", "anapaula99@gmail.com"],
-  ];
+  const newUserData = [[uuidv4(), values.name, values.phone, values.email]];
 
   const row = await googleSheets.spreadsheets.values.append({
     auth,
@@ -105,8 +100,10 @@ app.post("/deleteUser", async (req, res) => {
     dateTimeRenderOption: "FORMATTED_STRING",
   });
 
+  const { values } = req.body;
+
+  const bodyID = values.id;
   const rows = userRegisters.data.values;
-  const bodyID = "0c37f043-44c5-4d8b-b93e-101f824012db";
   let rowIndex = getTableRow(rows, bodyID);
 
   // For delete a Row it's necessary inform the row index of row will be excluded in the startIndex field.
@@ -147,19 +144,13 @@ app.post("/updateUser", async (req, res) => {
     dateTimeRenderOption: "FORMATTED_STRING",
   });
 
-  const rows = data.values;
-  const bodyID = "ddf7327f-1fb6-4d51-8e6d-573c7abdf668";
-  let rowIndex = getTableRow(rows, bodyID);
+  const { values } = req.body;
 
-  const { values } = req.body; // Body update data
-  const userData = [
-    [
-      bodyID,
-      "Welinton Hoff da Rosa",
-      "51996540312",
-      "welinton.h.r@hotmail.com",
-    ],
-  ];
+  const bodyID = values.id;
+  const rows = data.values;
+  const rowIndex = getTableRow(rows, bodyID);
+
+  const userData = [[bodyID, values.name, values.phone, values.email]];
 
   const updateValue = await googleSheets.spreadsheets.values.update({
     auth,
